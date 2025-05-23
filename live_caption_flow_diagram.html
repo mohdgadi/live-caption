@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Caption Flow Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .description {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .legend {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        .legend h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .legend ul {
+            margin: 10px 0;
+        }
+        .legend li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Live Caption System Flow Diagram</h1>
+        
+        <div class="description">
+            <p><strong>Overview:</strong> This diagram illustrates the complete flow of the live caption system, from audio capture through transcription to subtitle display using FFmpeg, WhisperX (local AI transcription), Google Translate API (for translation), and PyQt6.</p>
+        </div>
+
+        <div class="mermaid">
+graph TD
+    A[System Audio] --> B(FFmpeg Capture);
+    B --> C{live-audio/capture_system_audio.py};
+    C --> D[Temporary WAV File];
+    D --> E(FFmpeg Volume Adjustment);
+    E --> F[Processed WAV File];
+
+    subgraph "Live Audio Streaming"
+        G[FFmpeg Streamer<br/>stream_system_audio_ffmpeg.py] --> H[Audio Queue<br/>collections.deque];
+    end
+
+    subgraph "WhisperX Transcription Pipeline"
+        H --> I[Transcription Processor<br/>transcription_processor.py];
+        I --> J{VAD Enabled?};
+        J -->|Yes| K[Silero VAD Model<br/>Speech Detection];
+        J -->|No| L[Fixed Duration Chunking];
+        K --> M[WhisperX Model<br/>Local Transcription];
+        L --> M;
+        M --> N[Raw Transcription<br/>Output Queue];
+    end
+
+    subgraph "Translation & Display Pipeline"
+        N --> O[Application Event Loop<br/>live_system_transcriber.py];
+        O --> P{Translation Enabled?};
+        P -->|Yes| Q[Google Translate API<br/>Text Translation];
+        P -->|No| R[Raw Text Display];
+        Q --> S[Translated Text];
+        R --> T[File Writer];
+        S --> T;
+        T --> U[transcription.txt];
+        U --> V[subtitle-ui/subtitle_overlay.py];
+        V --> W[PyQt6 Subtitle Overlay<br/>Reads every 2 seconds];
+    end
+
+    %% Styling
+    classDef audioCapture fill:#e1f5fe,stroke:#0277bd,stroke-width:2px;
+    classDef processing fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef transcription fill:#e8f5e8,stroke:#388e3c,stroke-width:2px;
+    classDef translation fill:#fff8e1,stroke:#f57f17,stroke-width:2px;
+    classDef display fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef storage fill:#fce4ec,stroke:#c2185b,stroke-width:2px;
+
+    class A,B,C audioCapture;
+    class D,F,U storage;
+    class E processing;
+    class G,H transcription;
+    class I,J,K,L,M,N transcription;
+    class O,P,Q,S translation;
+    class R,T,V,W display;
+        </div>
+
+        <div class="legend">
+            <h3>Component Legend:</h3>
+            <ul>
+                <li><strong>Audio Capture (Blue):</strong> System audio capture and initial processing</li>
+                <li><strong>Processing (Purple):</strong> Audio processing and enhancement</li>
+                <li><strong>Storage (Pink):</strong> File storage and data persistence</li>
+                <li><strong>Transcription (Green):</strong> Local AI transcription using WhisperX</li>
+                <li><strong>Translation (Yellow):</strong> Text translation using Google Translate API</li>
+                <li><strong>Display (Orange):</strong> User interface and subtitle display</li>
+            </ul>
+
+            <h3>Key Components:</h3>
+            <ul>
+                <li><strong>capture_system_audio.py:</strong> Captures system audio using FFmpeg with volume adjustment</li>
+                <li><strong>stream_system_audio_ffmpeg.py:</strong> Streams audio chunks to processing queue</li>
+                <li><strong>transcription_processor.py:</strong> Processes audio using WhisperX with optional VAD (Voice Activity Detection)</li>
+                <li><strong>live_system_transcriber.py:</strong> Main coordinator handling transcription, translation, and file output</li>
+                <li><strong>subtitle_overlay.py:</strong> PyQt6 application that displays subtitles on screen</li>
+            </ul>
+
+            <h3>Data Flow:</h3>
+            <ol>
+                <li>System audio is captured and processed by FFmpeg</li>
+                <li>Audio chunks are continuously streamed to WhisperX for local transcription</li>
+                <li>Raw transcriptions are optionally translated using Google Translate API</li>
+                <li>Final text (translated or raw) is written to transcription.txt</li>
+                <li>PyQt6 overlay reads and displays the latest transcriptions every 2 seconds</li>
+            </ol>
+
+            <h3>Key Features:</h3>
+            <ul>
+                <li><strong>Local Processing:</strong> WhisperX runs locally for privacy and speed</li>
+                <li><strong>VAD Support:</strong> Silero VAD model for intelligent speech detection</li>
+                <li><strong>Multi-language:</strong> Support for various languages with optional translation to English</li>
+                <li><strong>Real-time Display:</strong> Live subtitle overlay with customizable appearance</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>
